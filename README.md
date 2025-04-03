@@ -30,20 +30,16 @@ For: *EMAI - Sapienza University of Rome* (IoT Assignment 1)
 
 ## 📦 Library Dependencies
 
-Install the following libraries using the Arduino Library Manager:
-
 - `Heltec ESP32 Dev-Boards`
 - `arduinoFFT`
 - `WiFi`
 - `PubSubClient`
 
-Make sure you're using the **Heltec ESP32 Board Package** (version 3.0.2 or later) from the Board Manager.
-
 ---
 
 ## 📶 MQTT Setup
 
-In the code, update your Wi-Fi and MQTT credentials:
+In the code, update Wi-Fi and MQTT credentials:
 
 ```cpp
 const char* ssid = "YOUR_WIFI_SSID";
@@ -54,23 +50,11 @@ const int mqtt_port = 1883;
 const char* mqtt_topic = "iot/aggregate";
 ```
 
-Then, to listen to messages on your PC:
+Then, to listen to messages on Mosquitto server:
 
 ```bash
 mosquitto_sub -h 192.168.x.x -t iot/aggregate
 ```
-
----
-
-## ⚙️ LoRa Configuration
-
-This project initializes the LoRa radio using:
-
-```cpp
-Heltec.begin(false /*Display*/, true /*LoRa*/, true /*Serial*/, true /*PABOOST*/, REGION_EU868);
-```
-
-> Note: LoRa is initialized but **not yet transmitting**. You can extend this by adding LoRaWAN or P2P logic using libraries like `LoRaWAN_ESP32`.
 
 ---
 
@@ -95,38 +79,6 @@ When the device boots, the OLED screen shows:
 J. Edgar Hernandez
 Assignment 1
 ```
-
-You can customize this in `initialDisplaySetup()`.
-
----
-
-## 🪵 Serial Output Format
-
-Example terminal output:
-```
-#SAMPLE:       2.4132
-#SAMPLING_FREQ: 23.1231
-#AGGREGATE:    1.1423
-[MQTT] Published: {"average": 1.1423}
-```
-
----
-
-## 📁 File Structure
-
-```
-project/
-│
-├── main.ino            # Main FreeRTOS + signal logic
-└── README.md           # This file
-```
-
----
-
-## 📜 License
-
-MIT License — free for personal, academic, or commercial use.
-
 ---
 
 ## 👨‍💻 Author

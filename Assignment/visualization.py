@@ -6,7 +6,7 @@ from collections import deque
 # === CONFIGURATION ===
 PORT = '/dev/cu.usbserial-0001'
 BAUD_RATE = 115200
-FFT_SIZE = 128
+FFT_SIZE = 256
 BINS_TO_PLOT = FFT_SIZE // 2
 SAMPLE_WINDOW = 256  # number of time-domain samples to show
 
@@ -24,7 +24,6 @@ freqs = get_freqs(sampling_freq, FFT_SIZE, BINS_TO_PLOT)
 bars = ax_fft.bar(freqs, [0]*BINS_TO_PLOT, width=(freqs[1] - freqs[0]))
 ax_fft.set_xlabel("Frequency (Hz)")
 ax_fft.set_ylabel("Magnitude")
-ax_fft.set_ylim(0, 100)
 
 # Time-domain signal plot
 sample_buffer = deque([0]*SAMPLE_WINDOW, maxlen=SAMPLE_WINDOW)
@@ -61,6 +60,7 @@ try:
                 for bar, freq in zip(bars, freqs):
                     bar.set_x(freq)
                 ax_fft.set_xlim(freqs[0], freqs[-1])
+                
             except ValueError:
                 continue
 
@@ -84,9 +84,17 @@ try:
                 print(f"[ERROR] AGGREGATE parse: {e}")
                 continue
 
-        elif line.startswith("[WARNING]") or line.startswith("[ERROR]") or line.startswith("[INFO]") or line.startswith("[DEBUG]"):
+        # elif line.startswith("[WARNING]") or line.startswith("[ERROR]") or line.startswith("[INFO]") or line.startswith("[DEBUG]"):
+        elif line.startswith("[WARNING]") or line.startswith("[INFO]") or line.startswith("[DEBUG]"):
             print(line)
             continue
+        
+        elif line.startswith("#COMPONENT:"):
+            try:
+                _, freq, mag = line.split('\t')
+                print(f"[COMPONENT] Frequency: {float(freq):.2f} Hz | Magnitude: {float(mag):.2f}")
+            except ValueError:
+                continue
 
         elif '\t' in line:  # FFT values (raw data)
             try:
@@ -95,6 +103,8 @@ try:
                     continue  # Skip incomplete FFT
                 for bar, val in zip(bars, values):
                     bar.set_height(val)
+                ax_fft.set_ylim(0, max(values) * 1.1)
+                ax_fft.relim()
             except ValueError as e:
                 # Don't treat early boot lines as errors
                 if not line.startswith("ESP-") and not line.startswith("load:") and not line.startswith("rst:"):

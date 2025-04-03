@@ -3,7 +3,6 @@
 #include "arduinoFFT.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
-#include "heltec.h"
 
 //////////////////////      DECLARATIONS      //////////////////////
 
@@ -13,8 +12,8 @@
 #define SAMPLE_BUFFER_SIZE 256
 
 // FFT Configuration
-#define FFT_SAMPLE_SIZE 128
-#define FFT_TASK_RATE 3000 // MS
+#define FFT_SAMPLE_SIZE 256
+#define FFT_TASK_RATE 500 // MS
 
 // Aggregation Configuration
 #define AGGREGATE_WINDOW_DURATION 5.0
@@ -50,6 +49,18 @@ SignalConfig signal1 = {
   .f_k = {8.0, 10.0},
   .N = 2
 };
+
+// SignalConfig signal1 = {
+//   .a_k = {3.0, 1.5},
+//   .f_k = {6.0, 12.0},
+//   .N = 2
+// };
+
+// SignalConfig signal1 = {
+//   .a_k = {1.0, 3.5},
+//   .f_k = {4.0, 9.0},
+//   .N = 2
+// };
 
 // FreeRTOS Mux
 portMUX_TYPE samplingMux = portMUX_INITIALIZER_UNLOCKED;
@@ -183,10 +194,6 @@ void FFTTask(void *param) {
     FFT.compute(vReal, vImag, FFT_SAMPLE_SIZE, FFT_FORWARD);
     FFT.complexToMagnitude(vReal, vImag, FFT_SAMPLE_SIZE);
 
-    // Print FFT result
-    char freqMsg[128];
-    snprintf(freqMsg, sizeof(freqMsg), "#SAMPLING_FREQ: %.4f", current_sampling_freq);
-    safeSerialPrintln(freqMsg);
 
     if (serial_visualization) {
       char fftLine[1024];
@@ -199,12 +206,51 @@ void FFTTask(void *param) {
       safeSerialPrintln(fftLine);
     }
 
-    float peakFrequency = FFT.majorPeak(vReal, FFT_SAMPLE_SIZE, current_sampling_freq);
-    if (isnan(peakFrequency) || peakFrequency <= 0.0 || peakFrequency > current_sampling_freq / 2.0) {
-      peakFrequency = MIN_SAMPLING_FREQ * 2.0;
+    float sum = 0.0;
+    for (int i = 1; i < FFT_SAMPLE_SIZE / 2; i++) {
+      sum += vReal[i];
+    }
+    float mean = sum / (FFT_SAMPLE_SIZE / 2 - 1);
+
+    float variance = 0.0;
+    for (int i = 1; i < FFT_SAMPLE_SIZE / 2; i++) {
+      float diff = vReal[i] - mean;
+      variance += diff * diff;
+    }
+    float stddev = sqrt(variance / (FFT_SAMPLE_SIZE / 2 - 1));
+
+    float threshold = mean + 2.0 * stddev;
+
+    float maxPeakValue = 0.0;
+    float maxPeakFrequency = 0.0;
+    
+    safeSerialPrintln("[INFO] Detected components:");
+    for (int i = 0; i < FFT_SAMPLE_SIZE / 2; i++) {
+      if (vReal[i] > threshold) {
+        float freq = (i * current_sampling_freq) / FFT_SAMPLE_SIZE;
+        char compLine[64];
+        snprintf(compLine, sizeof(compLine), "#COMPONENT:\t%.2f\t%.2f", freq, vReal[i]);
+        safeSerialPrintln(compLine);
+        if (vReal[i] > maxPeakValue) {
+          maxPeakValue = vReal[i];
+          maxPeakFrequency = freq;
+        }
+      }
     }
 
-    float newSamplingFreq = 2.1 * peakFrequency;
+    if (isnan(maxPeakFrequency) || maxPeakFrequency <= 0.0 || maxPeakFrequency > current_sampling_freq / 2.0) {
+      maxPeakFrequency = MIN_SAMPLING_FREQ * 2.0;
+    }
+
+    float newSamplingFreq = 2.1 * maxPeakFrequency;
+
+    // Print Freq result
+    char freqMsg[128];
+    snprintf(freqMsg, sizeof(freqMsg), "[INFO] Max. Frequency Detected: %.4f", maxPeakFrequency);
+    safeSerialPrintln(freqMsg);
+    snprintf(freqMsg, sizeof(freqMsg), "#SAMPLING_FREQ: %.4f", current_sampling_freq);
+    safeSerialPrintln(freqMsg);
+
     newSamplingFreq = constrain(newSamplingFreq, MIN_SAMPLING_FREQ, MAX_SAMPLING_FREQ);
 
     taskENTER_CRITICAL(&samplingMux);
@@ -294,9 +340,6 @@ void setup() {
   // WiFi & MQTT
   setupWiFi();
   mqttClient.setServer(mqtt_server, mqtt_port);
-
-  // LoRa Setup
-  Heltec.begin(false /*Display*/, true /*LoRa*/, true /*Serial*/, true /*PABOOST*/, REGION_EU868);
   
   initialDisplaySetup();
 
