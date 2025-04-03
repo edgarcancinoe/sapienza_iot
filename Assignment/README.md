@@ -25,7 +25,6 @@
   - OLED display
 - Compatible with:
   - Arduino IDE
-  - PlatformIO
 
 ---
 
