@@ -39,7 +39,7 @@ Developed by **J. Edgar Hernandez**
 
 ---
 
-## 🧠 Signal Simulation
+## Signal Simulation
 
 Signal is randomly generated using:
 
@@ -54,16 +54,16 @@ Where:
 
 ---
 
-## 📉 Adaptive Sampling Frequency
+## Adaptive Sampling Frequency
 
-### 🎯 Objective
+### Objective
 
 Use **Nyquist Theorem** to adapt sampling rate:
 > `new_rate = 2.1 * max_frequency_detected`
 
 This helps reduce:
-- 🪫 **Energy consumption**
-- 🌐 **MQTT bandwidth usage**
+- **Energy consumption**
+- **MQTT bandwidth usage**
 
 Sampling ranges:
 - `MIN_SAMPLING_FREQ = 50 Hz`
@@ -71,7 +71,7 @@ Sampling ranges:
 
 ---
 
-## 📦 Aggregation + MQTT
+## Aggregation + MQTT
 
 Every **5 seconds**, the system:
 - Averages sampled values
