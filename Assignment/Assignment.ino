@@ -17,11 +17,11 @@
 #define FFT_TASK_RATE 2000 // MS
 
 // Aggregation Configuration
-#define AGGREGATE_WINDOW_DURATION 5.0
-#define AGGREGATE_TASK_RATE 5000 // MS
+#define AGGREGATE_WINDOW_DURATION .2
+#define AGGREGATE_TASK_RATE 200 // MS
 
 // MQTT Configuration
-#define MQTT_TASK_RATE 5000 // MS
+#define MQTT_TASK_RATE 200 // MS
 
 // WiFi Configuration
 const char* ssid = "iPhone de Edgar";
@@ -362,7 +362,7 @@ void setup() {
 
   xTaskCreatePinnedToCore(SensorTask, "Sensor", 8192, &sim_signal, 1, NULL, 1);
   xTaskCreatePinnedToCore(FFTTask, "FFT", 8192, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(AggregateTask, "Aggregate", 8192, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(AggregateTask, "Aggregate", 8192, NULL, 1, NULL, 0);
   xTaskCreatePinnedToCore(MQTTTask, "MQTT", 8192, NULL, 1, NULL, 0);
 
 }
