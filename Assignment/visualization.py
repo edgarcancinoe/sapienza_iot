@@ -28,7 +28,7 @@ ax_fft.set_ylabel("Magnitude")
 # Time-domain signal plot
 sample_buffer = deque([0]*SAMPLE_WINDOW, maxlen=SAMPLE_WINDOW)
 line_time, = ax_time.plot(range(SAMPLE_WINDOW), sample_buffer)
-ax_time.set_ylim(-10, 10)
+
 ax_time.set_ylabel("Sample Value")
 ax_time.set_xlabel("Sample Index")
 
@@ -70,6 +70,8 @@ try:
                 sample_buffer.append(val)
                 line_time.set_ydata(sample_buffer)
                 ax_time.relim()
+                y_lim = max(sample_buffer) * 1.1
+                ax_time.set_ylim(-y_lim, y_lim)
                 ax_time.autoscale_view()
             except Exception as e:
                 print(f"[ERROR] SAMPLE parse: {e}")

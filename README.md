@@ -1,87 +1,160 @@
-# 📡 Real-Time Signal Processing with MQTT and LoRa on Heltec ESP32
+# 📡 Adaptive Signal Processing & MQTT Communication on Heltec ESP32
 
-An ESP32-based project that simulates signal data, analyzes it with FFT, computes a moving average, and sends the data via MQTT (and optionally LoRa). Built using FreeRTOS and Heltec ESP32 WiFi LoRa v3.
+This project demonstrates an IoT system running on a **Heltec WiFi LoRa 32 V3** that simulates analog signals, computes FFT to identify dominant frequencies, dynamically adapts the sampling rate, computes aggregate values, and publishes them over MQTT. The goal is to showcase **energy-aware data acquisition and communication** using FreeRTOS.
 
 Developed by **J. Edgar Hernandez**  
-For: *EMAI - Sapienza University of Rome* (IoT Assignment 1)
+📘 *EMAI – Sapienza University of Rome*  
+🎓 *IoT Assignment 1*
 
 ---
 
 ## 🚀 Features
 
-- 🎛️ Real-time sine wave signal simulation
-- ⚡ Adaptive sampling using FFT peak detection
-- 📊 Signal aggregation with time window averaging
-- ☁️ MQTT integration for publishing data to a broker
-- 📡 LoRa (SX1262) initialization for future expansion
-- 🧵 Thread-safe serial output using semaphores
-- 🖥️ OLED display initialization for status display
+- ✅ Simulates sine wave signals with up to 3 frequency components.
+- 🔍 Real-time **FFT** for peak detection and frequency domain analysis.
+- ⚡ **Adaptive Sampling**: Modifies sampling rate based on FFT analysis to save energy.
+- 📊 Aggregates signal over 5-second windows.
+- 📤 Publishes results over MQTT to an edge server.
+- 📟 Uses onboard OLED for startup info.
+- 🧵 FreeRTOS multi-tasking: Sensor, FFT, Aggregator, MQTT worker.
 
 ---
 
-## 🧰 Hardware Required
+## 🔧 Setup Instructions
 
-- [Heltec WiFi LoRa 32 V3](https://heltec.org/project/wifi-lora-32-v3/)
-  - ESP32-S3 chip
-  - SX1262 LoRa radio module
-  - 0.96” OLED screen
+### 🛠 Requirements
 
----
+- Heltec WiFi LoRa 32 V3 board
+- PlatformIO / Arduino IDE
+- MQTT broker (e.g., Mosquitto)
+- WiFi network
+- Serial monitor (115200 baud)
 
-## 📦 Library Dependencies
+### 📦 Libraries Used
 
-- `Heltec ESP32 Dev-Boards`
 - `arduinoFFT`
-- `WiFi`
 - `PubSubClient`
+- `Wire.h` (I2C)
+- `HT_SSD1306Wire` (OLED Display)
 
 ---
 
-## 📶 MQTT Setup
+## 📡 Configuration
 
-In the code, update Wi-Fi and MQTT credentials:
+### WiFi & MQTT
+
+Edit these lines in the sketch:
 
 ```cpp
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-
-const char* mqtt_server = "192.168.x.x";
+const char* ssid = "iPhone de Edgar";
+const char* password = "01234567";
+const char* mqtt_server = "172.20.10.2";  // Your machine’s IP
 const int mqtt_port = 1883;
 const char* mqtt_topic = "iot/aggregate";
 ```
 
-Then, to listen to messages on Mosquitto server:
+To find your IP address, run:
 
 ```bash
-mosquitto_sub -h 192.168.x.x -t iot/aggregate
+ifconfig   # (macOS/Linux)
+ipconfig   # (Windows)
 ```
 
 ---
 
-## 🧵 FreeRTOS Task Breakdown
+## 🧠 Signal Simulation
 
-| Task Name    | Description                                           |
-|-------------|--------------------------------------------------------|
-| SensorTask   | Simulates analog sine signals                         |
-| FFTTask      | Applies FFT to sampled data and adjusts sample rate   |
-| AggregateTask| Calculates moving average over a 5s window            |
-| MQTTTask     | Publishes the average to the MQTT broker              |
+Signal is randomly generated using:
 
-Each task runs on its own core/thread, leveraging the ESP32’s FreeRTOS scheduler.
+```
+SUM( a_k * sin(2π f_k t) )
+```
+
+Where:
+- `f_k ∈ [20Hz, 200Hz]`
+- `a_k ∈ [10, 25]`
+- `N = 2 or 3` components
 
 ---
 
-## 🖥️ OLED Display Output
+## 📉 Adaptive Sampling Frequency
 
-When the device boots, the OLED screen shows:
+### 🎯 Objective
+
+Use **Nyquist Theorem** to adapt sampling rate:
+> `new_rate = 2.1 * max_frequency_detected`
+
+This helps reduce:
+- 🪫 **Energy consumption**
+- 🌐 **MQTT bandwidth usage**
+
+Sampling ranges:
+- `MIN_SAMPLING_FREQ = 50 Hz`
+- `MAX_SAMPLING_FREQ = 1000 Hz`
+
+---
+
+## 📦 Aggregation + MQTT
+
+Every **5 seconds**, the system:
+- Averages sampled values
+- Publishes via MQTT in JSON format:
+
+```json
+{"average": 12.3456}
+```
+
+---
+
+## 📊 Energy Evaluation
+
+To compare **adaptive vs constant (oversampled)** behavior:
+
+1. Run the system with adaptive sampling:
+   - Collect timestamps and sampling frequency.
+   - Estimate number of samples (`samples = freq * time`).
+2. Run again with a fixed high sampling rate (e.g., 1000 Hz).
+3. Calculate energy savings:
 
 ```
-J. Edgar Hernandez
-Assignment 1
+saving % = (1 - samples_adaptive / samples_constant) * 100%
 ```
+
+You can log all `#SAMPLING_FREQ:` messages from the serial output and analyze them in Python or Excel.
+
+---
+
+## 📈 MQTT Monitoring
+
+Use `mosquitto_sub` to view messages:
+
+```bash
+mosquitto_sub -h 172.20.10.2 -t "iot/aggregate"
+```
+
+---
+
+## 📁 Folder Structure
+
+```bash
+├── src/
+│   └── main.cpp
+├── README.md
+└── platformio.ini
+```
+
+---
+
+## ✅ Future Improvements
+
+- LoRaWAN + TTN cloud integration
+- Energy metering using INA219
+- CSV export for signal logs
+- OTA updates
+
 ---
 
 ## 👨‍💻 Author
 
-**J. Edgar Hernandez**  
-IoT Assignment 1 — EMAI, Sapienza University
+J. Edgar Hernandez  
+*IoT Assignment 1, Sapienza EMAI*

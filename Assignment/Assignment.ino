@@ -3,17 +3,18 @@
 #include "arduinoFFT.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include "esp_system.h" // Required for esp_random()
 
 //////////////////////      DECLARATIONS      //////////////////////
 
 // Sampling Configuration
-#define MIN_SAMPLING_FREQ 16.0
-#define MAX_SAMPLING_FREQ 48.0
+#define MIN_SAMPLING_FREQ 50.0
+#define MAX_SAMPLING_FREQ 1000.0
 #define SAMPLE_BUFFER_SIZE 256
 
 // FFT Configuration
 #define FFT_SAMPLE_SIZE 256
-#define FFT_TASK_RATE 500 // MS
+#define FFT_TASK_RATE 2000 // MS
 
 // Aggregation Configuration
 #define AGGREGATE_WINDOW_DURATION 5.0
@@ -23,11 +24,11 @@
 #define MQTT_TASK_RATE 5000 // MS
 
 // WiFi Configuration
-const char* ssid = "FRITZ!Box 7530 LP";
-const char* password = "70403295595551907386";
+const char* ssid = "iPhone de Edgar";
+const char* password = "01234567";
 
 // MQTT Configuration
-const char* mqtt_server = "192.168.178.50";
+const char* mqtt_server = "172.20.10.2";
 const int mqtt_port = 1883;
 const char* mqtt_topic = "iot/aggregate";
 
@@ -44,23 +45,6 @@ typedef struct {
   int N;
 } SignalConfig;
 
-SignalConfig signal1 = {
-  .a_k = {2.0, 4.0},
-  .f_k = {8.0, 10.0},
-  .N = 2
-};
-
-// SignalConfig signal1 = {
-//   .a_k = {3.0, 1.5},
-//   .f_k = {6.0, 12.0},
-//   .N = 2
-// };
-
-// SignalConfig signal1 = {
-//   .a_k = {1.0, 3.5},
-//   .f_k = {4.0, 9.0},
-//   .N = 2
-// };
 
 // FreeRTOS Mux
 portMUX_TYPE samplingMux = portMUX_INITIALIZER_UNLOCKED;
@@ -78,6 +62,32 @@ QueueHandle_t sampleQueueAggregate;
 QueueHandle_t aggregateQueue;
 
 //////////////////////      FUNCTIONS      ////////////////////// 
+
+#define MAX_COMPONENTS 3
+
+SignalConfig sim_signal;  // This will hold the randomly generated signal
+
+// Helper function for random float in range
+float randomFloat(float min, float max) {
+  return min + ((float)random() / (float)RAND_MAX) * (max - min);
+}
+
+// Create a random signal config
+void createRandomSignal() {
+  int numComponents = random(2, MAX_COMPONENTS + 1);  // 2 or 3
+  sim_signal.N = numComponents;
+
+  for (int i = 0; i < numComponents; i++) {
+    sim_signal.f_k[i] = randomFloat(20.0, 200.0);     // Frequency between 20-200 Hz
+    sim_signal.a_k[i] = randomFloat(10.0, 25.0);      // Amplitude between 10-25
+  }
+
+  Serial.printf("[INFO] Created random sim_signal with %d components:\n", sim_signal.N);
+  for (int i = 0; i < MAX_COMPONENTS; i++) {
+    Serial.println(sim_signal.N);
+    Serial.printf("[INFO]  - Component %d: %.2f Hz @ %.2f amplitude\n", i + 1, sim_signal.f_k[i], sim_signal.a_k[i]);
+  }
+}
 
 // Turn on display
 void VextON(void) {
@@ -106,8 +116,8 @@ void setupWiFi() {
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print("[INFO].");
+    delay(100);
+    Serial.print(".");
   }
   Serial.print("\n");
   Serial.println("[INFO] WiFi connected. IP: " + WiFi.localIP().toString());
@@ -181,7 +191,7 @@ void FFTTask(void *param) {
     float vReal[FFT_SAMPLE_SIZE], vImag[FFT_SAMPLE_SIZE];
 
     for (int i = 0; i < FFT_SAMPLE_SIZE; i++) {
-      if (xQueueReceive(sampleQueueFFT, &vReal[i], pdMS_TO_TICKS(50)) != pdTRUE) {
+      if (xQueueReceive(sampleQueueFFT, &vReal[i], pdMS_TO_TICKS(100)) != pdTRUE) {
         safeSerialPrintln("[ERROR] Timeout while receiving from sampleQueueFFT in FFTTask");
         i--; // retry this index
         continue;
@@ -334,6 +344,9 @@ void setup() {
   
   Serial.begin(115200);
   
+  randomSeed(esp_random());
+  createRandomSignal();     
+
   
   serialMutex = xSemaphoreCreateMutex();
 
@@ -347,7 +360,7 @@ void setup() {
   sampleQueueAggregate = xQueueCreate(SAMPLE_BUFFER_SIZE, sizeof(float));
   aggregateQueue = xQueueCreate(10, sizeof(float));
 
-  xTaskCreatePinnedToCore(SensorTask, "Sensor", 8192, &signal1, 1, NULL, 1);
+  xTaskCreatePinnedToCore(SensorTask, "Sensor", 8192, &sim_signal, 1, NULL, 1);
   xTaskCreatePinnedToCore(FFTTask, "FFT", 8192, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(AggregateTask, "Aggregate", 8192, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(MQTTTask, "MQTT", 8192, NULL, 1, NULL, 0);
