@@ -2,7 +2,7 @@ import serial
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
-
+from time import sleep
 # === CONFIGURATION ===
 PORT                = '/dev/cu.usbserial-0001'
 BAUD_RATE           = 115200
@@ -18,6 +18,8 @@ ser.reset_input_buffer()
 times      = deque()
 values     = deque()
 info_lines = deque(maxlen=MAX_INFO_LINES)
+# state to track deep-sleep mode
+deep_sleep_mode = False
 
 # === PLOT SETUP ===
 plt.style.use('dark_background')
@@ -38,13 +40,14 @@ ax_plot.set_title("Live Signal")
 
 ax_console = fig.add_subplot(gs[0, 1])
 ax_console.axis('off')
+colour = 'c'
 text_info_console = ax_console.text(
     0.01, 0.99, "", transform=ax_console.transAxes,
-    va='top', ha='left', fontsize=9, color='c', family='monospace'
+    va='top', ha='left', fontsize=9, color=colour, family='monospace'
 )
 text_avg = ax_console.text(
     0.01, 0.01, "Measured sampling frequency: -- Hz", transform=ax_console.transAxes,
-    va='bottom', ha='left', fontsize=10, color='y', family='monospace'
+    va='bottom', ha='left', fontsize=10, color=colour, family='monospace'
 )
 
 def read_serial():
@@ -81,21 +84,44 @@ def init():
     return line, text_info_console, text_avg
 
 def update(frame):
+    global deep_sleep_mode
+    colour = 'c'
     # drain serial
     while True:
         kind, a, b = read_serial()
         if kind is None:
             break
         if kind == "REBOOT":
+            # on reboot, reset everything and show reboot message in yellow
             times.clear()
             values.clear()
             info_lines.clear()
+            deep_sleep_mode = False
+            text_info_console.set_color('c')
             line.set_data([], [])
-            text_info_console.set_text("[REBOOT detected]")
             text_avg.set_text("Measured sampling frequency: -- Hz")
+            info_lines.append("[REBOOT detected]")
             continue
+
         if kind == "INFO":
-            info_lines.append(a)
+            # entering deep sleep: clear console, show only this msg in yellow
+            if "Entering deep sleep" in a:
+                deep_sleep_mode = True
+                info_lines.clear()
+                text_info_console.set_color('y')
+                text_info_console.set_text(a)
+                continue
+            # waking up: exit deep-sleep mode, clear console, show this msg in blue
+            if "Waking up from deep sleep" in a:
+                deep_sleep_mode = False
+                info_lines.clear()
+                text_info_console.set_color('c')
+                info_lines.append(a)
+                text_info_console.set_text(a)
+                continue
+            # normal INFO: only append if not in deep-sleep mode
+            if not deep_sleep_mode:
+                info_lines.append(a)
         elif kind == "SAMPLE":
             t_s, v = a, b
             if times and t_s < times[-1]:
@@ -105,8 +131,10 @@ def update(frame):
             times.append(t_s)
             values.append(v)
 
-    # update console text
-    text_info_console.set_text("\n".join(info_lines))
+    # if not in deep-sleep mode, show accumulated info lines in blue
+    if not deep_sleep_mode:
+        text_info_console.set_color('c')
+        text_info_console.set_text("\n".join(info_lines))
 
     # average fs
     if len(times) >= 2:

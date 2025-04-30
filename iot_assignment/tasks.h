@@ -70,8 +70,7 @@ void FFTTask(void *param) {
     for (int j = 0; j < FFT_SAMPLE_SIZE / 2; j++) {
       if (vReal[j] > threshold) {
         float freq = (j * (*samplingFreq)) / FFT_SAMPLE_SIZE;
-        if (vReal[j] > maxPeakValue) {
-          maxPeakValue = vReal[j];
+        if (freq > maxPeakFrequency) {
           maxPeakFrequency = freq;
         }
         if (SERIAL_DEBUG) {

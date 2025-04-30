@@ -13,18 +13,18 @@
 #define MAX_COMPONENTS 2
 #define MIN_FREQ 5
 #define MAX_FREQ 20
-#define MIN_AMP 10
+#define MIN_AMP 15
 #define MAX_AMP 20
 
 // Sampling Configuration
 #define MIN_SAMPLING_FREQ 10.0
 #define MAX_SAMPLING_FREQ 200.0
-#define SAMPLE_BUFFER_SIZE 512
+#define SAMPLE_BUFFER_SIZE 1024
 
 // FFT Configuration
-#define N_FFT_RUNS 3
-#define FFT_SAMPLE_SIZE 512
-#define FFT_TASK_RATE 500 // MS
+#define N_FFT_RUNS 2
+#define FFT_SAMPLE_SIZE 1024
+#define FFT_TASK_RATE 50 // MS
 
 // Aggregation Configuration
 #define AGGREGATE_WINDOW_DURATION 0.25f // seconds
