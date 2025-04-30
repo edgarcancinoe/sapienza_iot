@@ -2,8 +2,12 @@
 
 This project implements an embedded system for real-time environmental sensing, data processing, and remote visualization, using HelTec's WiFi + Lora V3 (ESP32-like) Micro-Controller board.
 
-[![Ver en YouTube](https://img.youtube.com/vi/XXU3Zl5cux4/0.jpg)](https://www.youtube.com/watch?v=XXU3Zl5cux4)
-
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=XXU3Zl5cux4">
+    <img src="https://img.youtube.com/vi/XXU3Zl5cux4/maxresdefault.jpg" 
+         alt="Vídeo de demostración" width="560" height="315"/>
+  </a>
+</p>
 ---
 
 ## 📦 Project Structure
