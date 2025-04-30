@@ -66,7 +66,7 @@ void FFTTask(void *param) {
     float stddev = sqrt(variance / (FFT_SAMPLE_SIZE / 2 - 1));
     
     // Threshold value to detect peaks
-    float threshold = mean + 3.0 * stddev;
+    float threshold = mean + 2.0 * stddev;
     for (int j = 0; j < FFT_SAMPLE_SIZE / 2; j++) {
       if (vReal[j] > threshold) {
         float freq = (j * (*samplingFreq)) / FFT_SAMPLE_SIZE;
