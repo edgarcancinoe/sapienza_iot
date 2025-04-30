@@ -55,8 +55,8 @@ FreeRTOS task functions:
 
 ## 📡 MQTT Topics
 
-- `iot/aggregate`
-
+- `mosquitto -c mosquitto.conf -v`
+- `mosquitto_sub -h localhost -t iot/aggregate`
 
 ---
 
