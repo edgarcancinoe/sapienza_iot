@@ -10,7 +10,7 @@ This project implements an embedded system for real-time environmental sensing, 
 ├── config.h                # Centralized configuration for MQTT, pins, thresholds
 ├── utils.h                 # Utility functions: moving average, value mapping, memory usage
 ├── tasks.h                 # Task declarations for FreeRTOS: sensor, MQTT
-├── mqtt_visualization.py  # Real-time data visualization of MQTT data
+├── mqtt_visualization.py   # Real-time data visualization of MQTT data
 ├── visualization.py        # Serial-debug data visualization interface
 ```
 

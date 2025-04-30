@@ -263,6 +263,7 @@ void AggregateTask(void *param) {
     if (currentFreq != lastFreq) {
       lastFreq = currentFreq;
       nSamples = (int) floorf(currentFreq * AGGREGATE_WINDOW_DURATION);
+      xQueueReset(sampleQueueAggregate);
       char buf[64];
       snprintf(buf, sizeof(buf),"[DEBUG] Recalculated nSamples = %d (f=%.1f Hz)", nSamples, lastFreq);
       safeSerialPrintln(buf, serialMutex);
@@ -274,9 +275,9 @@ void AggregateTask(void *param) {
       continue;
     }
 
-    float val_sum     = 0;
+    float val_sum           = 0;
     uint64_t time_stamp_sum = 0;
-    int received  = 0;
+    int received            = 0;
 
     for (int i = 0; i < nSamples; i++) {
       StampedMsg<float> sample;

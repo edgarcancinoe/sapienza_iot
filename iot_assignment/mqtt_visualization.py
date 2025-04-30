@@ -8,14 +8,14 @@ import paho.mqtt.client as mqtt
 MQTT_BROKER         = "localhost"
 MQTT_PORT           = 1883
 MQTT_TOPIC          = "iot/aggregate"
-WINDOW_DURATION_SEC = 4.0     # (not used for x-axis limits anymore)
-MAX_POINTS          = 1000    # max points to keep in memory
+WINDOW_DURATION_SEC = 4.0    
+MAX_POINTS          = 1000  
 
 # === DATA BUFFERS ===
 # times holds device timestamps in seconds (float)
 times     = deque(maxlen=MAX_POINTS)
 values    = deque(maxlen=MAX_POINTS)
-intervals = deque(maxlen=MAX_POINTS-1)  # inter-arrival Δt in ms
+intervals = deque(maxlen=MAX_POINTS-1) 
 
 # absolute timestamp of the very first sample
 ts_start = None
@@ -36,7 +36,6 @@ def on_message(client, userdata, msg):
         if ts_start is None:
             ts_start = ts_device
 
-        # detect device timestamp wrap/reset
         if times and ts_device < times[-1]:
             times.clear()
             values.clear()
