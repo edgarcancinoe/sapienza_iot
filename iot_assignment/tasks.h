@@ -172,11 +172,8 @@ void SensorTask(void *param) {
   uint64_t sleepDurationUs = (uint64_t)SLEEP_DURATION_SEC  * 1000000ULL;
   uint64_t awakeDurationUs = (uint64_t)AWAKE_DURATION_SEC  * 1000000ULL;
 
-  uint64_t startUs = esp_timer_get_time();
-  if (rtcStartUs == 0) rtcStartUs = startUs;
-
   while (true) {
-
+    
     float fs;
     taskENTER_CRITICAL(samplingMux);
       fs = *samplingFreq;
@@ -221,9 +218,13 @@ void SensorTask(void *param) {
 
     // Check if time to deep sleep
     uint64_t nowUs = esp_timer_get_time();
-    if (fftDone && (nowUs - rtcStartUs >= awakeDurationUs)) {
-      if (SERIAL_DEBUG) safeSerialPrintln("[INFO] Entering deep sleep", serialMutex);
-      lastSleepTime = nowUs;
+    if (fftDone && rtcStartUs == 0) {
+      rtcStartUs = nowUs;
+    }
+    if (fftDone && rtcStartUs != 0 && (nowUs - rtcStartUs >= awakeDurationUs)) {
+      if (SERIAL_DEBUG) {
+        safeSerialPrintln("[INFO] Entering deep sleep", serialMutex);
+      }
       esp_sleep_enable_timer_wakeup(sleepDurationUs);
       esp_deep_sleep_start();
     }

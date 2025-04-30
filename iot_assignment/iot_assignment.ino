@@ -17,7 +17,6 @@ RTC_DATA_ATTR SignalConfig sim_signal; // Will be initialized in setup()
 RTC_DATA_ATTR float current_sampling_freq = MAX_SAMPLING_FREQ;
 RTC_DATA_ATTR extern volatile bool fftDone = false;
 RTC_DATA_ATTR uint64_t rtcStartUs = 0;
-RTC_DATA_ATTR uint64_t lastSleepTime = 0;
 
 // -------- Global Variable Declarations --------
 
@@ -44,16 +43,14 @@ void setup() {
   SPI.begin();     
   
   serialMutex = xSemaphoreCreateMutex();
-
-  if (fftDone && SERIAL_DEBUG) { // Means we entered setup from deep sleep
-    safeSerialPrintln("[INFO] Waking up from deep sleep.", serialMutex);
-    serialDescribeSignal(sim_signal, serialMutex);
-    safeSerialPrintln(String("[INFO] Sampling frequency set to: ") + String(current_sampling_freq,4), serialMutex);
-    safeSerialPrintln("[DEBUG] FFT WILL NOT BE RECALCULATED.", serialMutex);
-    
-    rtcStartUs = 0;
-    uint64_t nowUs = esp_timer_get_time();
-    if (SERIAL_DEBUG) safeSerialPrintln(String("[INFO] Slept for ") + String(nowUs - rtcStartUs) + String("us."), serialMutex);
+  rtcStartUs = 0;
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
+    if (SERIAL_DEBUG) { // Means we entered setup from deep sleep
+      safeSerialPrintln("[INFO] Waking up from deep sleep.", serialMutex);
+      serialDescribeSignal(sim_signal, serialMutex);
+      safeSerialPrintln(String("[INFO] Sampling frequency set to: ") + String(current_sampling_freq,4), serialMutex);
+      safeSerialPrintln("[DEBUG] FFT WILL NOT BE RECALCULATED.", serialMutex);
+    }
   } else {
     if (SERIAL_DEBUG) safeSerialPrintln("[DEBUG] FFT WILL BE RECALCULATED.", serialMutex);
     // Initialize signal config

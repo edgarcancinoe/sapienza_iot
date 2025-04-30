@@ -19,11 +19,11 @@
 // Sampling Configuration
 #define MIN_SAMPLING_FREQ 10.0
 #define MAX_SAMPLING_FREQ 200.0
-#define SAMPLE_BUFFER_SIZE 1024
+#define SAMPLE_BUFFER_SIZE 512
 
 // FFT Configuration
 #define N_FFT_RUNS 3
-#define FFT_SAMPLE_SIZE 1024
+#define FFT_SAMPLE_SIZE 512
 #define FFT_TASK_RATE 500 // MS
 
 // Aggregation Configuration
