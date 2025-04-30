@@ -1,6 +1,6 @@
 # Embedded Sensor Monitoring and Visualization System
 
-This project is a comprehensive embedded system for real-time environmental sensing, data processing, and remote visualization. It combines C-based firmware running on a microcontroller with Python-based MQTT data visualization tools.
+This project implements an embedded system for real-time environmental sensing, data processing, and remote visualization, using HelTec's WiFi + Lora V3 (ESP32-likex) Micro-Controller board.
 
 ---
 
@@ -9,40 +9,33 @@ This project is a comprehensive embedded system for real-time environmental sens
 ```
 ├── config.h                # Centralized configuration for MQTT, pins, thresholds
 ├── utils.h                 # Utility functions: moving average, value mapping, memory usage
-├── tasks.h                 # Task declarations for FreeRTOS: sensor, LED, MQTT
-├── mqtt_visualization.py  # Real-time data visualization via MQTT using Matplotlib
-├── visualization.py        # Alternate MQTT visualization interface
+├── tasks.h                 # Task declarations for FreeRTOS: sensor, MQTT
+├── mqtt_visualization.py  # Real-time data visualization of MQTT data
+├── visualization.py        # Serial-debug data visualization interface
 ```
 
 ---
 
 ## 🧠 Overview
-
-The firmware collects sensor data (e.g., temperature), processes it, and publishes values over MQTT. LED indicators respond to threshold conditions. Python scripts visualize the data in real-time using MQTT subscriptions.
+1. Firmware generates a synthetic sinusoidal signal.
+2. At startup, performs the FFT N times, averages the results to identify the fastest relevant frequency, and then adjusts the sampling rate based on that data using the Nyquist criterion for efficient sampling.
+3. Processes the signal, aggregates values over a configurable window, and publishes the results via MQTT.
+4. Python scripts visualize the data by reading from the serial port and subscribing to MQTT topics.
 
 ---
 
-## ⚙️ Firmware Details (C / FreeRTOS)
+## ⚙️ File Details
 
 ### `config.h`
-Defines all necessary constants:
-- MQTT broker address, port, client ID
-- Topic names for publishing and subscribing
-- LED pin numbers and control thresholds
-- Sampling interval for sensor data
-
+Defines all necessary constants
 ### `utils.h`
-Utility functions used across tasks:
-- `mapValue()`: Maps one range to another (e.g., sensor to LED brightness)
-- `getFreeHeap()`: Memory usage insights
-- `MovingAverage`: Class to smooth sensor values
-
+Utility functions used across tasks
 ### `tasks.h`
 FreeRTOS task functions:
-- `taskSensor()`: Reads and processes sensor data
-- `taskMQTT()`: Publishes data to MQTT broker
-- `taskLED()`: Controls LED status based on thresholds
-- Modular task design improves maintainability and debugging
+- `MQTTTask()`
+- `FFTTask()`
+- `SensorTask()`
+- `AggregateTask()`
 
 ---
 
@@ -50,61 +43,25 @@ FreeRTOS task functions:
 
 ### `mqtt_visualization.py`
 - Connects to the same MQTT broker
-- Subscribes to published topics
-- Uses `matplotlib` to plot sensor data in real-time
-- Ideal for live monitoring and debugging
+- Plot sensor data in real-time
+- Measures and shows the frequency with which data is sent via MQTT
 
 ### `visualization.py`
-- Similar structure with potential differences in:
-  - Plotting layout
-  - Topic filtering
-  - UI behavior
-- May offer extended or alternate data visualization setups
+- Uses serial-published data to show sensing
+- Measures and shows the sampling frequency with which sensor data is sent via Serial port
 
----
-
-## 🚀 Getting Started
-
-### Requirements
-- **Firmware:** PlatformIO / Arduino with FreeRTOS support
-- **Python:**
-  ```bash
-  pip install paho-mqtt matplotlib
-  ```
-
-### Steps
-1. Flash firmware to the embedded board.
-2. Run `mqtt_visualization.py` or `visualization.py` to monitor data.
-3. Adjust `config.h` for different thresholds or topics.
 
 ---
 
 ## 📡 MQTT Topics
 
-- `sensor/temperature` — published sensor readings
-- `device/status` — operational status
-- `led/state` — LED control signal
+- `iot/aggregate`
 
-(Make sure topics match the broker you're using.)
 
 ---
 
-## 🧰 Extending the System
+## 🧑‍💻 Author
 
-- Add new sensors and update `taskSensor()`.
-- Modify visualizations for additional metrics.
-- Use `utils.h` to ensure reusable logic.
+- *[Jose Edgar Hernandez Cancino Estrada]*
 
----
 
-## 🧑‍💻 Authors
-
-- System Design: *[Your Name]*
-- Firmware Development: *[Your Name]*
-- Visualization Tools: *[Your Name]*
-
----
-
-## 📄 License
-
-MIT License. See `LICENSE` for more information.
