@@ -1,85 +1,110 @@
-# 📡 Adaptive Signal Processing & MQTT Communication on Heltec ESP32
+# Embedded Sensor Monitoring and Visualization System
 
-This project demonstrates an IoT system running on a **Heltec WiFi LoRa 32 V3** that simulates analog signals, computes FFT to identify dominant frequencies, dynamically adapts the sampling rate, computes aggregate values, and publishes them over MQTT. The goal is to showcase **energy-aware data acquisition and communication** using FreeRTOS.
-
-Developed by **J. Edgar Hernandez**  
-*EMAI – Sapienza University of Rome*  
-*IoT Assignment 1*
+This project is a comprehensive embedded system for real-time environmental sensing, data processing, and remote visualization. It combines C-based firmware running on a microcontroller with Python-based MQTT data visualization tools.
 
 ---
 
-## Features
+## 📦 Project Structure
 
-- Simulates sine wave signals with up to 3 frequency components.
-- Real-time **FFT** for peak detection and frequency domain analysis.
-- **Adaptive Sampling**: Modifies sampling rate based on FFT analysis to save energy.
-- Aggregates signal over 5-second windows.
-- Publishes results over MQTT to an edge server.
-- FreeRTOS multi-tasking: Sensor, FFT, Aggregator, MQTT worker.
+```
+├── config.h                # Centralized configuration for MQTT, pins, thresholds
+├── utils.h                 # Utility functions: moving average, value mapping, memory usage
+├── tasks.h                 # Task declarations for FreeRTOS: sensor, LED, MQTT
+├── mqtt_visualization.py  # Real-time data visualization via MQTT using Matplotlib
+├── visualization.py        # Alternate MQTT visualization interface
+```
 
 ---
 
-##  Setup Instructions
+## 🧠 Overview
+
+The firmware collects sensor data (e.g., temperature), processes it, and publishes values over MQTT. LED indicators respond to threshold conditions. Python scripts visualize the data in real-time using MQTT subscriptions.
+
+---
+
+## ⚙️ Firmware Details (C / FreeRTOS)
+
+### `config.h`
+Defines all necessary constants:
+- MQTT broker address, port, client ID
+- Topic names for publishing and subscribing
+- LED pin numbers and control thresholds
+- Sampling interval for sensor data
+
+### `utils.h`
+Utility functions used across tasks:
+- `mapValue()`: Maps one range to another (e.g., sensor to LED brightness)
+- `getFreeHeap()`: Memory usage insights
+- `MovingAverage`: Class to smooth sensor values
+
+### `tasks.h`
+FreeRTOS task functions:
+- `taskSensor()`: Reads and processes sensor data
+- `taskMQTT()`: Publishes data to MQTT broker
+- `taskLED()`: Controls LED status based on thresholds
+- Modular task design improves maintainability and debugging
+
+---
+
+## 📊 Visualization Tools (Python)
+
+### `mqtt_visualization.py`
+- Connects to the same MQTT broker
+- Subscribes to published topics
+- Uses `matplotlib` to plot sensor data in real-time
+- Ideal for live monitoring and debugging
+
+### `visualization.py`
+- Similar structure with potential differences in:
+  - Plotting layout
+  - Topic filtering
+  - UI behavior
+- May offer extended or alternate data visualization setups
+
+---
+
+## 🚀 Getting Started
 
 ### Requirements
+- **Firmware:** PlatformIO / Arduino with FreeRTOS support
+- **Python:**
+  ```bash
+  pip install paho-mqtt matplotlib
+  ```
 
-- Heltec WiFi LoRa 32 V3 board
-- PlatformIO / Arduino IDE
-- MQTT broker (e.g., Mosquitto)
-- WiFi network
-- Serial monitor (115200 baud)
-
-
-### Libraries
-
-- `arduinoFFT`
-- `PubSubClient`
-- `Wire.h` (I2C)
-- `HT_SSD1306Wire` (OLED Display)
+### Steps
+1. Flash firmware to the embedded board.
+2. Run `mqtt_visualization.py` or `visualization.py` to monitor data.
+3. Adjust `config.h` for different thresholds or topics.
 
 ---
 
-## Signal Simulation
+## 📡 MQTT Topics
 
-Signal is randomly generated using:
+- `sensor/temperature` — published sensor readings
+- `device/status` — operational status
+- `led/state` — LED control signal
 
-```
-SUM( a_k * sin(2π f_k t) )
-```
-
-Where:
-- `f_k ∈ [20Hz, 200Hz]`
-- `a_k ∈ [10, 25]`
-- `N = 2 or 3` components
+(Make sure topics match the broker you're using.)
 
 ---
 
-## Adaptive Sampling Frequency
+## 🧰 Extending the System
 
-### Objective
-
-Use **Nyquist Theorem** to adapt sampling rate:
-> `new_rate = 2.1 * max_frequency_detected`
-
-This helps reduce:
-- **Energy consumption**
-- **MQTT bandwidth usage**
-
-Sampling ranges:
-- `MIN_SAMPLING_FREQ = 50 Hz`
-- `MAX_SAMPLING_FREQ = 1000 Hz`
+- Add new sensors and update `taskSensor()`.
+- Modify visualizations for additional metrics.
+- Use `utils.h` to ensure reusable logic.
 
 ---
 
-## Aggregation + MQTT
+## 🧑‍💻 Authors
 
-Every **5 seconds**, the system:
-- Averages sampled values
-- Publishes via MQTT in JSON format:
-
-```json
-{"average": 12.3456}
-```
+- System Design: *[Your Name]*
+- Firmware Development: *[Your Name]*
+- Visualization Tools: *[Your Name]*
 
 ---
 
+## 📄 License
+
+MIT License. See `LICENSE` for more information.
