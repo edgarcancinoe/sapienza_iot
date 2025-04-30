@@ -1,6 +1,6 @@
 # Embedded Sensor Monitoring and Visualization System
 
-This project implements an embedded system for real-time environmental sensing, data processing, and remote visualization, using HelTec's WiFi + Lora V3 (ESP32-likex) Micro-Controller board.
+This project implements an embedded system for real-time environmental sensing, data processing, and remote visualization, using HelTec's WiFi + Lora V3 (ESP32-like) Micro-Controller board.
 
 ---
 
