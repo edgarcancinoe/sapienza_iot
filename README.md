@@ -12,7 +12,11 @@ This project implements an embedded system for real-time environmental sensing, 
 </p>
 
 ## On energy and power
-A TI INA219 sensor was employed to measure the energy usage of the microcontroller. In the following video, the plot of voltages, current, and power can be seen, althoug the most notorious graph corresponds to the power (mW). The operation of the implementation requires ~600mW (it ranges from 400mW to 800mW, centered at approximately 600mW) of instantaneous power for the sampling + WiFi transmision, and goes as low as ~50mW when in deep sleep mode.
+A TI INA219 sensor was employed to measure the energy usage of the microcontroller.
+
+In the following video, the plot of voltages, current, and power can be seen, though the most notorious graph corresponds to the power (mW). 
+
+The operation of the implementation requires `~600mW` (it ranges from `400mW` to `800mW`, centered at approximately `600mW`) of instantaneous power for the **sampling** + **display** + **WiFi transmision**, and goes **as low as `~50mW` when in deep sleep mode**.
 
 #### [▶ Power consumption Demonstration video (YouTube)](https://www.youtube.com/watch?v=D7BbXF6Wk3c)
 <p align="center">
