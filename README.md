@@ -2,7 +2,7 @@
 
 This project implements an embedded system for real-time environmental sensing, data processing, and remote visualization, using HelTec's WiFi + Lora V3 (ESP32-like) Micro-Controller board.
 
-#### [▶ Demonstration video (YouTube)](https://www.youtube.com/watch?v=XXU3Zl5cux4)
+#### [▶ Operation Demonstration video (YouTube)](https://www.youtube.com/watch?v=XXU3Zl5cux4)
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=XXU3Zl5cux4">
@@ -11,6 +11,16 @@ This project implements an embedded system for real-time environmental sensing, 
   </a>
 </p>
 
+## On energy and power
+An TI INA219 sensor was employed to measure the energy usage of the microcontroller. In the following video, the plot of voltages, current, and power can be seen, althoug the most notorious graph corresponds to the power (mW). The operation of the implementation requires ~600mW (it ranges from 400mW to 800mW, centered at approximately 600mW) of instantaneous power for the sampling + WiFi transmision, and goes as low as ~50mW when in deep sleep mode.
+
+#### [▶ Power consumption Demonstration video (YouTube)](https://www.youtube.com/watch?v=D7BbXF6Wk3c)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=D7BbXF6Wk3c">
+    <img src="https://img.youtube.com/vi/D7BbXF6Wk3c/maxresdefault.jpg" 
+         alt="Demonstration video" width="560" height="315"/>
+  </a>
+</p>
 ---
 
 ## 📦 Project Structure
@@ -19,7 +29,7 @@ This project implements an embedded system for real-time environmental sensing, 
 ├── config.h                # Centralized configuration for MQTT, pins, thresholds
 ├── utils.h                 # Utility functions: moving average, value mapping, memory usage
 ├── tasks.h                 # Task declarations for FreeRTOS: sensor, MQTT
-├── mqtt_visualization.py   # Real-time data visualization of MQTT data
+├── ;   # Real-time data visualization of MQTT data
 ├── visualization.py        # Serial-debug data visualization interface
 ```
 
