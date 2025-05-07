@@ -1,10 +1,12 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// DEBUG
-#define SERIAL_DEBUG true
-#define PUBLISH_SIGNAL true
-#define PUBLISH_AGGREGATE true
+#define TURN_ON_DISPLAY true
+
+// DEBUG (SERIAL)
+#define SERIAL_DEBUG false
+#define PUBLISH_SIGNAL false
+#define PUBLISH_AGGREGATE false
 
 // DeepSleep configuration
 #define SLEEP_DURATION_SEC 4
@@ -34,18 +36,18 @@
 #define MQTT_TASK_RATE 10 // MS
 
 // WiFi Configuration
-const char* ssid = "FRITZ!Box 7530 LP";
-const char* password = "70403295595551907386";
+// const char* ssid = "FRITZ!Box 7530 LP";
+// const char* password = "70403295595551907386";
 
-// const char* ssid = "iPhone de Edgar";
-// const char* password = "01234567";
+const char* ssid = "iPhone de Edgar";
+const char* password = "01234567";
 
 // const char* ssid = "PortofinoHomes";
 // const char* password = "Portofinohomes_2203";
 
 // MQTT Configuration
-const char* mqtt_server = "192.168.178.50"; // Rome
-// const char* mqtt_server    = "172.20.10.2"; // Hotspot
+// const char* mqtt_server = "192.168.178.50"; // Rome
+const char* mqtt_server    = "172.20.10.2"; // Hotspot
 // const char* mqtt_server = "192.168.0.108"; // Altro
 
 const int mqtt_port = 1883;

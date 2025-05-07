@@ -122,16 +122,18 @@ void VextON(void) {
 }
 
 void initialDisplaySetup() {
-  VextON();
-  delay(100);
-  display.init();
-  display.setFont(ArialMT_Plain_10);
-  display.clear();
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.setFont(ArialMT_Plain_10);
-  display.drawString(4, 8, "J. Edgar Hernandez");
-  display.drawString(4, 16, "Assignment 1");
-  display.display();  
+  if (TURN_ON_DISPLAY) {
+    VextON();
+    delay(100);
+    display.init();
+    display.setFont(ArialMT_Plain_10);
+    display.clear();
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.setFont(ArialMT_Plain_10);
+    display.drawString(4, 8, "J. Edgar Hernandez");
+    display.drawString(4, 16, "Assignment 1");
+    display.display();  
+  }
 }
 
 #endif

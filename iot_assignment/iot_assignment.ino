@@ -1,84 +1,65 @@
-#include <SPI.h> 
-#include "config.h"
-#include "HT_SSD1306Wire.h"
-#include "arduinoFFT.h"
-#include <WiFi.h>
+// use https://github.com/nathandunk/BetterSerialPlotter to visualize the data
+
+#include <Arduino.h>
 #include <Wire.h>
-#include <PubSubClient.h>
-#include "esp_system.h"
-#include <stdbool.h>
-#include "esp_sleep.h"
+#include <Adafruit_INA219.h>
 
-// General function and data struct implementations
-#include "utils.h"
+Adafruit_INA219 ina219;
 
-// RTC Memory variables
-RTC_DATA_ATTR SignalConfig sim_signal; // Will be initialized in setup()
-RTC_DATA_ATTR float current_sampling_freq = MAX_SAMPLING_FREQ;
-RTC_DATA_ATTR extern volatile bool fftDone = false;
-RTC_DATA_ATTR uint64_t rtcStartUs = 0;
-
-// -------- Global Variable Declarations --------
-
-// WiFi and MQTT clients as globals so they persist for the lifetime of the program
-WiFiClient espClient;
-PubSubClient mqttClient(espClient);
-
-// Global FreeRTOS mux and sampling configuration values
-portMUX_TYPE samplingMux = portMUX_INITIALIZER_UNLOCKED;
-
-// Global synchronization and queue objects
-SemaphoreHandle_t serialMutex;
-QueueHandle_t sampleQueueFFT;
-QueueHandle_t sampleQueueAggregate;
-QueueHandle_t aggregateQueue;
-
-// Task implementations
-#include "tasks.h"
-
-void setup() {
-  //////////////////////      Start      //////////////////////
-  randomSeed(esp_random());
+void setup(void) 
+{
   Serial.begin(115200);
-  SPI.begin();     
-  
-  serialMutex = xSemaphoreCreateMutex();
-  rtcStartUs = 0;
-  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
-    if (SERIAL_DEBUG) { // Means we entered setup from deep sleep
-      safeSerialPrintln("[INFO] Waking up from deep sleep.", serialMutex);
-      serialDescribeSignal(sim_signal, serialMutex);
-      safeSerialPrintln(String("[INFO] Sampling frequency set to: ") + String(current_sampling_freq,4), serialMutex);
-      safeSerialPrintln("[DEBUG] FFT WILL NOT BE RECALCULATED.", serialMutex);
-    }
-  } else {
-    if (SERIAL_DEBUG) safeSerialPrintln("[DEBUG] FFT WILL BE RECALCULATED.", serialMutex);
-    // Initialize signal config
-    sim_signal = createRandomSignal(serialMutex); 
+  while (!Serial) {
+      // will pause Zero, Leonardo, etc until serial console opens
+      delay(1);
   }
 
-  // Initialize global queues
-  sampleQueueFFT       = xQueueCreate(SAMPLE_BUFFER_SIZE, sizeof(float));
-  sampleQueueAggregate = xQueueCreate(SAMPLE_BUFFER_SIZE, sizeof(StampedMsg<float>));
-  aggregateQueue       = xQueueCreate(SAMPLE_BUFFER_SIZE, sizeof(StampedMsg<float>));
-    
-  setupWiFi();
-  mqttClient.setServer(mqtt_server, mqtt_port);
-  initialDisplaySetup();
+  uint32_t currentFrequency;
+  Serial.println("Hello!");
 
-  // Task parameters
-  SensorTaskParams* sensorParams = new SensorTaskParams{&sim_signal, &current_sampling_freq, &samplingMux, serialMutex, sampleQueueFFT, sampleQueueAggregate};
-  AggregateTaskParams* aggParams = new AggregateTaskParams{sampleQueueAggregate, aggregateQueue, &current_sampling_freq, &samplingMux, serialMutex};
-  MQTTTaskParams* mqttParams = new MQTTTaskParams{ &mqttClient, serialMutex, aggregateQueue };
-  FFTTaskParams* fftParams = new FFTTaskParams{sampleQueueFFT, &current_sampling_freq, &samplingMux, serialMutex};
-
-  // Initialize tasks
-  xTaskCreatePinnedToCore(SensorTask, "Sensor", 8192, sensorParams, 1, NULL, 1);
-  if (!fftDone) xTaskCreatePinnedToCore(FFTTask, "FFT", 8192, fftParams, 2, nullptr, 0);
-  xTaskCreatePinnedToCore(AggregateTask, "Aggregate", 8192, aggParams, 1, NULL, 1);
-  xTaskCreatePinnedToCore(MQTTTask, "MQTT", 8192, mqttParams, 1, NULL, 0);
-
+  // Initialize the INA219.
+  // By default the initialization will use the largest range (32V, 2A).  However
+  // you can call a setCalibration function to change this range (see comments).
+  if (! ina219.begin()) {
+    Serial.println("Failed to find INA219 chip");
+    while (1) { delay(10); }
+  }
+  // To use a slightly lower 32V, 1A range (higher precision on amps):
+  //ina219.setCalibration_32V_1A();
+  // Or to use a lower 16V, 400mA range (higher precision on volts and amps):
+  //ina219.setCalibration_16V_400mA();
+  Serial.println("Measuring voltage and current with INA219 ...");
 }
 
-void loop() {
+void loop(void) 
+{
+  float shuntvoltage = 0;
+  float busvoltage = 0;
+  float current_mA = 0;
+  float loadvoltage = 0;
+  float power_mW = 0;
+
+  shuntvoltage = ina219.getShuntVoltage_mV();
+  busvoltage = ina219.getBusVoltage_V();
+  current_mA = ina219.getCurrent_mA();
+  power_mW = ina219.getPower_mW();
+  loadvoltage = busvoltage + (shuntvoltage / 1000);
+
+  Serial.print(busvoltage);
+  //Serial.print(",");
+  Serial.print("\t");
+  Serial.print(shuntvoltage);
+  //Serial.print(",");
+  Serial.print("\t");
+  Serial.print(loadvoltage);
+  //Serial.print(",");
+  Serial.print("\t");
+  Serial.print(current_mA);
+  //Serial.print(",");
+  Serial.print("\t");
+  Serial.println(power_mW);
+  //Serial.println("");
+
+
+  delay(50);
 }
