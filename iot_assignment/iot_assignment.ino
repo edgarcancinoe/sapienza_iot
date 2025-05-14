@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <SPI.h> 
 #include "config.h"
 #include "HT_SSD1306Wire.h"
